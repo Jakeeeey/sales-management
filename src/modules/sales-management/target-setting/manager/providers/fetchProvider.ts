@@ -1,4 +1,4 @@
-//src/modules/business-intelligence-analytics/target-setting/manager/providers/fetchProvider.ts
+//src/modules/sales-management/target-setting/manager/providers/fetchProvider.ts
 "use client";
 
 import type { ManagerBootstrapResponse } from "../types";
@@ -35,23 +35,25 @@ export async function createSupplierAllocation(payload: {
   tsd_id: number;
   supplier_id: number;
   target_amount: number;
-  // optional for later when you add supervisor selection UI
   supervisor_user_id?: number | null;
 }): Promise<{ ok: true }> {
   await api("/api/sales-management/target-setting/manager", {
     method: "POST",
-    body: payload,
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ action: "UPSERT_SUPPLIER", ...payload }),
   });
   return { ok: true };
 }
 
-export async function updateSupplierAllocation(
-  id: number,
-  payload: { target_amount: number; supervisor_user_id?: number | null }
-): Promise<{ ok: true }> {
+export async function updateSupplierAllocation(payload: {
+  id: number;
+  target_amount: number;
+  supervisor_user_id?: number | null;
+}): Promise<{ ok: true }> {
   await api("/api/sales-management/target-setting/manager", {
     method: "PATCH",
-    body: { id, ...payload },
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ action: "UPDATE_SUPPLIER", ...payload }),
   });
   return { ok: true };
 }
