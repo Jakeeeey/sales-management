@@ -176,11 +176,13 @@ export type DashboardRegistryItem = Omit<SubsystemItem, "icon">;
 export default function MainDashboardClient({
     initialSubsystems,
     userFullName,
-    userEmail
+    userEmail,
+    isDealerOver = false
 }: {
     initialSubsystems: DashboardRegistryItem[];
     userFullName: string;
     userEmail: string;
+    isDealerOver?: boolean;
 }) {
     const q = ""; // State setter removed as search is managed by CommandPalette component logic
     const [isCompactHeader, setIsCompactHeader] = React.useState(false);
@@ -192,6 +194,27 @@ export default function MainDashboardClient({
 
         return () => window.removeEventListener("scroll", onScroll);
     }, []);
+    // Helper to check if rankings modal should auto-popup (Fresh login + haven't closed yet)
+    const checkShouldAutoOpenRankings = React.useCallback(() => {
+        if (!isDealerOver) return false;
+        try {
+            const hasSeen = localStorage.getItem("dealerover_salesman_ranking") === "true";
+            const isFreshLogin = sessionStorage.getItem("just_logged_in") === "true";
+            return isFreshLogin && !hasSeen;
+        } catch {
+            return false;
+        }
+    }, [isDealerOver]);
+
+    React.useEffect(() => {
+        if (checkShouldAutoOpenRankings()) {
+            const timer = setTimeout(() => {
+                window.dispatchEvent(new CustomEvent("open-dealerover-salesman-rankings"));
+            }, 100);
+            return () => clearTimeout(timer);
+        }
+    }, [checkShouldAutoOpenRankings]);
+
 
     const trackAccess = (id: string) => {
         // Access tracking disabled
@@ -287,7 +310,7 @@ export default function MainDashboardClient({
                             <div className="flex items-center pr-3 border-r border-slate-900/10 dark:border-white/10 mr-1">
                                 <CommandPalette subsystems={resolvedSubsystems} />
                             </div>
-                            <UserMenu fullName={userFullName} email={userEmail} />
+                            <UserMenu fullName={userFullName} email={userEmail} isDealerOver={isDealerOver} />
                         </div>
                     </div>
                 </div>

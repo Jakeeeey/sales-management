@@ -136,6 +136,31 @@ export default async function ERPMainDashboardPage() {
         console.error("[Dashboard Server] Fetch Error:", err);
     }
 
+    // Check general_setting for system_type === 'Dealerover'
+    let isDealerOver = false;
+    try {
+        const directusUrl = directusBase?.replace(/\/+$/, "") || "";
+        const targetToken = process.env.DIRECTUS_STATIC_TOKEN || "";
+        const settingFilter = JSON.stringify({
+            _and: [
+                { setting_key: { _eq: "system_type" } },
+                { setting_value: { _eq: "Dealerover" } }
+            ]
+        });
+        const settingRes = await fetch(`${directusUrl}/items/general_setting?filter=${encodeURIComponent(settingFilter)}&limit=1`, {
+            headers: { "Authorization": `Bearer ${targetToken}` },
+            cache: "no-store"
+        });
+        if (settingRes.ok) {
+            const settingJson = await settingRes.json();
+            isDealerOver = Array.isArray(settingJson.data) && settingJson.data.length > 0;
+        }
+    } catch (err) {
+        if (process.env.NODE_ENV === "development") {
+            console.error("[Dashboard Server] General setting fetch error:", err);
+        }
+    }
+
     const userFullName = [payload.FirstName, payload.LastName].filter(Boolean).join(" ") || "User";
     const userEmail = payload.email || "";
 
@@ -144,6 +169,7 @@ export default async function ERPMainDashboardPage() {
             initialSubsystems={subsystems} 
             userFullName={userFullName}
             userEmail={userEmail}
+            isDealerOver={isDealerOver}
         />
     );
 }
